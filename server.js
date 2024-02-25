@@ -1,26 +1,19 @@
-require('dotenv').config();
-const app = require("./app");
-const mongoose = require("mongoose");
+// server.js
+const app = require('./app');
+require('colors');
+const { join } = require('path');
+const connectDb = require('./config/connectDb');
 
-mongoose
-  .connect('mongodb+srv://hitmen798:Hitmen47@cluster0.gwowun6.mongodb.net/?retryWrites=true&w=majority')
-  .then(() => {
-    app.listen(3000);
-    console.log("Database connection successful on port 3000");
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
+const configPath = join(__dirname, 'config', '.env');
+require('dotenv').config({ path: configPath });
+
+console.log('Connection String:', process.env.CONNECTION);
+
+connectDb().then(() => {
+  const { PORT } = process.env;
+
+  app.listen(PORT, '127.0.0.1', () => {
+    console.log(`Server running on port ${PORT}`.magenta.italic);
   });
-
-process.on('SIGINT', async () => {
-  try {
-    await mongoose.connection.close();
-    console.log('MongoDB connection closed.');
-    process.exit(0);
-  } catch (err) {
-    console.error('Error closing MongoDB connection:', err.message);
-    process.exit(1);
-  }
 });
-//  Art 
+
