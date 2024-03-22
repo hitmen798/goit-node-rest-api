@@ -1,24 +1,38 @@
 const { join } = require("path");
-const configPath = join(process.cwd(), "config", ".env");
+const configPath = join(process.cwd(), ".env");
 require("dotenv").config({ path: configPath });
-const sg = require("@sendgrid/mail");
+
+const Mailjet = require("node-mailjet").apiConnect(
+  process.env.MJ_APIKEY_PUBLIC,
+  process.env.MJ_APIKEY_PRIVATE
+);
 const HTTPError = require("./HTTPError");
-sg.setApiKey(process.env.SENDGRID_KEY);
 
 const message = {
   to: "",
-  from: "dao426474@gmail.com",
+  from: "hitmen798@gmail.com",
   subject: "Verification",
   html: "",
 };
 
 const sendEmail = async (data) => {
-  const email = { ...data, from: "dao426474@gmail.com" };
+  const email = {
+    Messages: [
+      {
+        From: { Email: "hitmen798@gmail.com", Name: "Your Name" },
+        To: [{ Email: data.to }],
+        Subject: "Verification",
+        HTMLPart: data.html,
+      },
+    ],
+  };
+
   try {
-    sg.send(email);
+    await Mailjet.post("send", { version: "v3.1" }).request(email);
     return true;
   } catch (error) {
-    HTTPError(500, "Server error");
+    console.error(error);
+    throw new HTTPError(500, "Server error");
   }
 };
 
