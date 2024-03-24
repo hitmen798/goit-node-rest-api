@@ -17,6 +17,30 @@ class UserController {
   constructor() {
     this.service = UserService;
   }
+  verifyUser = asyncHandler(async (req, res) => {
+    const { verificationToken } = req.params;
+
+    // Знайдіть користувача за verificationToken
+    const user = await UserService.findUser(
+      verificationToken,
+      "verificationToken"
+    );
+
+    // Якщо користувач не знайдений, поверніть помилку 'Not Found'
+    if (!user) {
+      throw new HTTPError(404, "User not found");
+    }
+
+    // Встановіть verificationToken в null і verify в true
+    user.verificationToken = null;
+    user.verify = true;
+    await user.save();
+
+    // Поверніть успішну відповідь
+    HTTPResponse(res, 200, { message: "Verification successful" });
+  });
+
+  // Інші методи контролера користувача...
 
   createUser = asyncHandler(async ({ body }, res) => {
     const user = await this.service.findUser(body.email, "email");
@@ -43,7 +67,11 @@ class UserController {
 
     sendEmail(verifyEmail);
 
-    HTTPResponse(res, 201, createdUser);
+    HTTPResponse(res, 201, {
+      email: createdUser.email,
+      avatarURL: createdUser.avatarURL,
+      subscription: createdUser.subscription,
+    });
   });
 
   loginUser = asyncHandler(async ({ body: { email, password } }, res) => {
@@ -61,7 +89,7 @@ class UserController {
       id: user.id,
     };
 
-    const token = jwt.sign(payload, process.env.SECRET_KEY, {
+    const token = jwt.sign(payload, process.env.SECRET_JWT, {
       expiresIn: "23h",
     });
 
@@ -109,7 +137,7 @@ class UserController {
     }
 
     HTTPResponse(res, 200, { ...user, password: "000" });
-  })
+  });
 
   changeAvatar = asyncHandler(async ({ file }, res) => {
     const user = await this.service.findUser(res.locals.user.id, "_id");
@@ -134,7 +162,7 @@ class UserController {
     await user.save();
 
     HTTPResponse(res, 200, { email: user.email, avatarURL: user.avatarURL });
-  })
+  });
 
   verificationRequest = asyncHandler(async (req, res) => {
     const { verificationToken } = req.params;
@@ -153,7 +181,7 @@ class UserController {
     await user.save();
 
     HTTPResponse(res, 200, "Verification successful");
-  })
+  });
 
   resendVerificationRequest = asyncHandler(async ({ body }, res) => {
     const user = await this.service.findUser(body.email, "email ");
@@ -168,14 +196,14 @@ class UserController {
         subject: "Verify email",
         html: `<a target="_blank" href="http://localhost:${process.env.PORT}/users/verify/${user.verificationToken}">Verify your email</a>`,
       };
-  
+
       sendEmail(verifyEmail);
-  
+
       HTTPResponse(res, 200, {}, "Verification email sent");
     }
-    
+
     throw HTTPError(400, "Verification has already been passed");
-  })
+  });
 }
 
 module.exports = new UserController();

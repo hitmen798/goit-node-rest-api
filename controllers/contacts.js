@@ -12,13 +12,11 @@ const listContactsForUser = async (req, res, next) => {
 
     const contactsQuery = { owner };
 
-    if (favorite === 'true') {
+    if (favorite === "true") {
       contactsQuery.favorite = true;
     }
 
-    const result = await Contact.find(contactsQuery)
-      .skip(skip)
-      .limit(limit);
+    const result = await Contact.find(contactsQuery).skip(skip).limit(limit);
 
     res.json(result);
   } catch (error) {

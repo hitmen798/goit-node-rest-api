@@ -1,4 +1,5 @@
 const UserModel = require("../models/user");
+const { model, Schema } = require("mongoose");
 const bcrypt = require("bcrypt");
 class UserService {
   constructor() {

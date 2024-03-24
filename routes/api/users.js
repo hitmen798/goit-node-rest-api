@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const router = Router();
+// const router = Router();
 const validateBody = require("../../middlewares/validateBody");
 const {
   registerSchema,
@@ -11,10 +11,13 @@ const {
 const authenticate = require("../../middlewares/authenticate");
 const UserController = require("../../controllers/UserController");
 const upload = require("../../middlewares/upload");
-
-router.get("/current", authenticate, UserController.currentUser)
+const express = require("express");
+const router = express.Router();
+// const UserController = require("../controllers/UserController");
+router.get("/current", authenticate, UserController.currentUser);
 
 router.get("/verify/:verificationToken", UserController.verificationRequest);
+router.get("/verify/:verificationToken", UserController.verifyUser);
 
 router.post(
   "/register",
