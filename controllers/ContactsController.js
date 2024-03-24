@@ -7,98 +7,100 @@ class ContactsController {
     this.service = ContactsService;
   }
 
-  getAllContacts = async (req, res) => {
+  async getAllContacts(req, res) {
     const { id: owner } = res.locals.user;
 
     const { page = 1, limit = 5, favorite } = req.query;
     const skip = (page - 1) * limit;
 
-    const filter = {
-      owner,
-    };
-
-    if (favorite) {
-      filter.favorite = favorite;
-    }
+    const filter = { owner };
+    if (favorite) filter.favorite = favorite;
 
     const contacts = await this.service.getContacts(filter, skip, limit);
 
     if (!contacts) {
-      throw HTTPError(400);
+      throw HTTPError(400, "Failed to retrieve contacts");
     }
 
     HTTPResponse(res, 200, contacts);
-  };
+  }
 
-  getOneContact = async (req, res) => {
+  async getOneContact(req, res) {
     const id = req.params.contactId;
     const contact = await this.service.getContact(id);
 
     if (!contact) {
-      throw HTTPError(400);
+      throw HTTPError(404, "Contact not found");
     }
 
     HTTPResponse(res, 200, contact);
-  };
+  }
 
-  deleteContact = async (req, res) => {
+  async deleteContact(req, res) {
     const id = req.params.contactId;
     const contact = await this.service.deleteContact(id);
 
     if (!contact) {
-      throw HTTPError(404);
+      throw HTTPError(404, "Contact not found");
     }
 
     HTTPResponse(res, 200, contact, `Contact with ID ${id} deleted`);
-  };
+  }
 
-  createContact = async (req, res) => {
+  async createContact(req, res) {
     const { id: owner } = res.locals.user;
     const contact = await this.service.createContact({ ...req.body, owner });
 
     if (!contact) {
-      HTTPError(400, "Provide all fields");
+      throw HTTPError(400, "Provide all required fields");
     }
 
     HTTPResponse(res, 201, contact);
-  };
+  }
 
-  updateContact = async ({ params: { contactId }, body }, res) => {
-    const updatedContact = await this.service.updateContact(contactId, body);
+  async updateContact(req, res) {
+    const { contactId } = req.params;
+    const updatedContact = await this.service.updateContact(
+      contactId,
+      req.body
+    );
 
     if (!updatedContact) {
-      HTTPError(404);
+      throw HTTPError(404, "Contact not found");
     }
 
     HTTPResponse(
       res,
       200,
       updatedContact,
-      `User With ID: ${contactId} successfully updated`
+      `Contact with ID ${contactId} updated`
     );
-  };
+  }
 
-  updateStatusContact = async ({ params: { contactId }, body }, res) => {
-    if (!body.favorite) {
-      HTTPError(400, "Missing field favorite");
+  async updateStatusContact(req, res) {
+    const { contactId } = req.params;
+    const { favorite } = req.body;
+
+    if (!favorite) {
+      throw HTTPError(400, "Missing 'favorite' field in request body");
     }
 
     const updatedStatusContact = await this.service.updateStatusContact(
       contactId,
-      body
+      req.body
     );
 
     if (!updatedStatusContact) {
-      HTTPError(404);
+      throw HTTPError(404, "Contact not found");
     }
 
     HTTPResponse(
       res,
       200,
       updatedStatusContact,
-      "field 'favorite' updated successfully"
+      `Field 'favorite' updated successfully`
     );
-  };
+  }
 }
 
 module.exports = new ContactsController();
